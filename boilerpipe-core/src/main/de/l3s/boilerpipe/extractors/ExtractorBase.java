@@ -49,8 +49,22 @@ public abstract class ExtractorBase implements BoilerpipeExtractor {
     public String getText(final String html)
             throws BoilerpipeProcessingException {
         try {
-            return getText(new BoilerpipeSAXInput(new InputSource(
-                    new StringReader(html))).getTextDocument());
+            return getText(
+                    new BoilerpipeSAXInput(
+                        new InputSource(
+                            new StringReader(html)
+                        )
+                    ).getTextDocument());
+        } catch (SAXException e) {
+            throw new BoilerpipeProcessingException(e);
+        }
+    }
+
+    public TextDocument getDocument(final String html)
+            throws BoilerpipeProcessingException {
+        try {
+            return new BoilerpipeSAXInput(new InputSource(
+                    new StringReader(html))).getTextDocument();
         } catch (SAXException e) {
             throw new BoilerpipeProcessingException(e);
         }
@@ -112,5 +126,6 @@ public abstract class ExtractorBase implements BoilerpipeExtractor {
             throws BoilerpipeProcessingException {
         process(doc);
         return doc.getContent();
-    }    
+    }
+
 }
