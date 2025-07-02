@@ -101,14 +101,14 @@ public class TextDocument implements Cloneable {
      */
     public String getText(boolean includeContent, boolean includeNonContent) {
         StringBuilder sb = new StringBuilder();
-        LOOP: for (TextBlock block : getTextBlocks()) {
-            if(block.isContent()) {
-                if(!includeContent) {
-                    continue LOOP;
+        for (TextBlock block : getTextBlocks()) {
+            if (block.isContent()) {
+                if (!includeContent) {
+                    continue;
                 }
             } else {
-                if(!includeNonContent) {
-                    continue LOOP;
+                if (!includeNonContent) {
+                    continue;
                 }
             }
             sb.append(block.getText());
@@ -137,5 +137,36 @@ public class TextDocument implements Cloneable {
     		list.add(tb.clone());
     	}
     	return new TextDocument(title, list);
+    }
+
+    @Override
+    public String toString(){
+        StringBuilder result = new StringBuilder();
+        for(TextBlock block: textBlocks){
+            result.append(
+                String.format(
+                        "== NEW BLOCK ==\n" +
+                        "Is Content: {%b} " +
+                        "Num words: {%d} " +
+                        "Text Density: {%.3f} " +
+                        "Link Density: {%.3f} " +
+                        "Num blocks: {%d} " +
+                        "Num content blocks: {%d} "+
+                        "Offset start: {%d} " +
+                        "Offset end: {%d} " +
+                        "Text: {%s} \n",
+                        block.isContent,
+                        block.numWords,
+                        block.textDensity,
+                        block.linkDensity,
+                        textBlocks.size(),
+                        textBlocks.stream().filter(textBlock -> textBlock.isContent).count(),
+                        block.offsetBlocksStart,
+                        block.offsetBlocksEnd,
+                        block.getText()
+                )
+            );
+        }
+        return result.toString();
     }
 }
