@@ -11,7 +11,7 @@ out/
 *.iml
 *.ipr
 
-src/main/resources/
+boilerpipe-core/src/main/resources/
 
 ### Eclipse ###
 .apt_generated
