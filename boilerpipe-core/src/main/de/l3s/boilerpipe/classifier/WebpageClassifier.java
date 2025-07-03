@@ -124,17 +124,15 @@ public class WebpageClassifier {
         matchPattern(stringUrl);
 
         // Step 2: Content Analysis with multiple extractors
-        HTMLDocument htmlDocument = new HTMLDocument(rawHtml);
-        final BoilerpipeSAXInput input = new BoilerpipeSAXInput((htmlDocument).toInputSource());
-
-        final ImageExtractor imageExtractor = ImageExtractor.getInstance();
-        TextDocument doc = input.getTextDocument();
-        List<Image> images = imageExtractor.process(doc, rawHtml);
-
         // Process with each extractor using the same HTML input
         for (ExtractorBase extractor : extractors) {
             try {
+                HTMLDocument htmlDocument = new HTMLDocument(rawHtml);
+                final BoilerpipeSAXInput input = new BoilerpipeSAXInput((htmlDocument).toInputSource());
+                TextDocument doc = input.getTextDocument();
                 extractor.process(doc);
+                final ImageExtractor imageExtractor = ImageExtractor.getInstance();
+                List<Image> images = imageExtractor.process(doc, rawHtml);
                 PageType res = getType(doc, images);
                 if (res != null) {
                     results.put(res, results.getOrDefault(res, 0) + 1);

@@ -39,7 +39,7 @@ public final class WebpageClassifierDemo {
     }
 
     public static void main(String[] args) throws Exception {
-//        classify(TEST_URL);
+        classify(TEST_URL);
 //        debugTestDocuments(ArticleExtractor.INSTANCE);
         debugMetrics(TEST_URL);
     }
@@ -70,12 +70,12 @@ public final class WebpageClassifierDemo {
     private static void debugMetrics(String stringUrl) throws Exception {
         WebpageClassifier classifier = new WebpageClassifier();
         classifier.classify(stringUrl, getRawHtml());
-        
+
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         Map<String, List<Metrics>> metrics = classifier.getMetrics();
-        
+
         List<Map<String, List<Metrics>>> metricsWebsites;
-        
+
         // Check if file exists and is not empty
         File file = new File(METRICS_OUTPUT_PATH);
         if (file.exists() && file.length() > 0) {
@@ -96,13 +96,12 @@ public final class WebpageClassifierDemo {
             // Create new list if file doesn't exist or is empty
             metricsWebsites = new ArrayList<>();
         }
-        
+
         // Add the new metrics to the list
         metricsWebsites.add(metrics);
 
         try (FileWriter writer = new FileWriter(METRICS_OUTPUT_PATH)) {
             gson.toJson(metricsWebsites, writer);
-            System.out.println("Metrics written to: " + METRICS_OUTPUT_PATH);
             System.out.println("Total metrics entries: " + metricsWebsites.size());
         } catch (IOException e) {
             throw new RuntimeException("Error writing metrics to file", e);
