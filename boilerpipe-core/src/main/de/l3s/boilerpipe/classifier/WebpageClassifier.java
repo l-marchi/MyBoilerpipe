@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
+import de.l3s.boilerpipe.demo.WebpageClassifierDemo;
 import de.l3s.boilerpipe.document.Image;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
@@ -349,7 +350,9 @@ public class WebpageClassifier {
         return this.results;
     }
 
-    public List<Metrics> getMetrics(){
-        return metricsList;
+    public Map<String, List<Metrics>> getMetrics(){
+        Map<String, List<Metrics>> metrics = new HashMap<>();
+        metrics.put(WebpageClassifierDemo.TEST_URL, metricsList);
+        return  metrics;
     }
 }
