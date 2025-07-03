@@ -11,14 +11,16 @@ out/
 *.iml
 *.ipr
 
+/resources/
+
 ### Eclipse ###
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
 .springBeans
 .sts4-cache
+*/build-eclipse/
 
 ### NetBeans ###
 /nbproject/private/

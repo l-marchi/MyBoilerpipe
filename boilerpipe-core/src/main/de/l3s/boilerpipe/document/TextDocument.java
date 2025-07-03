@@ -154,7 +154,7 @@ public class TextDocument implements Cloneable {
                         "Num content blocks: {%d} "+
                         "Offset start: {%d} " +
                         "Offset end: {%d} " +
-                        "Text: {%s} \n",
+                        "\nText: {%s} \n",
                         block.isContent,
                         block.numWords,
                         block.textDensity,

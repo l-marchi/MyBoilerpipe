@@ -2,6 +2,7 @@ package de.l3s.boilerpipe.sax;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.xml.sax.InputSource;
 
@@ -20,7 +21,7 @@ public class HTMLDocument implements InputSourceable {
 	}
 	
 	public HTMLDocument(final String data) {
-		Charset cs = Charset.forName("utf-8");
+		Charset cs = StandardCharsets.UTF_8;
 		this.data = data.getBytes(cs);
 		this.charset = cs;
 	}
