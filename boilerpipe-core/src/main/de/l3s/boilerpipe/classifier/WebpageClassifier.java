@@ -1,8 +1,5 @@
 package de.l3s.boilerpipe.classifier;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -14,7 +11,6 @@ import de.l3s.boilerpipe.document.TextDocument;
 import de.l3s.boilerpipe.extractors.*;
 import de.l3s.boilerpipe.sax.BoilerpipeSAXInput;
 import de.l3s.boilerpipe.sax.HTMLDocument;
-import de.l3s.boilerpipe.sax.HTMLFetcher;
 import de.l3s.boilerpipe.sax.ImageExtractor;
 
 
@@ -22,16 +18,16 @@ import de.l3s.boilerpipe.sax.ImageExtractor;
  * Webpage classifier that categorizes web pages based on Boilerpipe extracted features.
  */
 public class WebpageClassifier {
-    private final Map<PageType, Integer> results = new HashMap<>();
-    private final List<Metrics> metricsList = new ArrayList<>();
+    private final Map<PageType, List<ExtractorType>> results = new HashMap<>();
+    private final Map<ExtractorType, Metrics> metricsMap = new HashMap<>();
 
-    private final List<ExtractorBase> extractors = Arrays.asList(
-            ArticleExtractor.INSTANCE,
-            DefaultExtractor.INSTANCE,
-            CanolaExtractor.INSTANCE,
-            ArticleSentencesExtractor.INSTANCE,
-            KeepEverythingExtractor.INSTANCE,
-            LargestContentExtractor.INSTANCE
+    private final List<Pair<ExtractorBase, ExtractorType>> extractors = Arrays.asList(
+            new Pair<>(ArticleExtractor.INSTANCE, ExtractorType.ARTICLE),
+            new Pair<>(DefaultExtractor.INSTANCE, ExtractorType.DEFAULT),
+            new Pair<>(CanolaExtractor.INSTANCE, ExtractorType.CANOLA),
+            new Pair<>(ArticleSentencesExtractor.INSTANCE, ExtractorType.ARTICLE_SENTENCES),
+            new Pair<>(KeepEverythingExtractor.INSTANCE, ExtractorType.KEEP_EVERYTHING),
+            new Pair<>(LargestContentExtractor.INSTANCE, ExtractorType.LARGEST_CONTENT)
     );
 
     private static final int LARGE_IMAGE_SIZE = 250;
@@ -119,47 +115,54 @@ public class WebpageClassifier {
     /**
      * Classifies a webpage given its URL
      */
-    public PageType classify(String stringUrl, String rawHtml) throws Exception {
+    public Map<PageType, List<ExtractorType>> classify(String stringUrl, String rawHtml) throws Exception {
         // Step 1: URL Pattern Analysis
         matchPattern(stringUrl);
 
         // Step 2: Content Analysis with multiple extractors
         // Process with each extractor using the same HTML input
-        for (ExtractorBase extractor : extractors) {
+        for (Pair<ExtractorBase, ExtractorType> extractor : extractors) {
             try {
                 HTMLDocument htmlDocument = new HTMLDocument(rawHtml);
                 final BoilerpipeSAXInput input = new BoilerpipeSAXInput((htmlDocument).toInputSource());
                 TextDocument doc = input.getTextDocument();
-                extractor.process(doc);
+                extractor.getFirst().process(doc);
                 final ImageExtractor imageExtractor = ImageExtractor.getInstance();
                 List<Image> images = imageExtractor.process(doc, rawHtml);
-                PageType res = getType(doc, images);
-                if (res != null) {
-                    results.put(res, results.getOrDefault(res, 0) + 1);
+                PageType resType = getType(doc, images, extractor.getSecond());
+
+                if (!results.containsKey(resType)){
+                    results.put(
+                        resType,
+                        new ArrayList<>()
+                    );
                 }
+                results.get(resType).add(extractor.getSecond());
+
             } catch (BoilerpipeProcessingException e) {
                 // Continue with other extractors if one fails
-                System.err.println("Warning: Extractor failed for " + stringUrl + ": " + e.getMessage());
+                System.err.println("Warning: Extractor failed for " + extractor.getSecond() + ": " + e.getMessage());
             }
         }
 
-        // Return the most common classification
-        Map.Entry<PageType, Integer> maxType = null;
-        for (Map.Entry<PageType, Integer> entry : results.entrySet()){
-            if (maxType == null || entry.getValue() > maxType.getValue()){
-                maxType = entry;
-            }
-        }
-        return maxType != null ? maxType.getKey() : PageType.UNKNOWN;
+        // Return the most common classification -> TODO
+        return results;
+    }
+
+    private PageType computeResult(){
+        return null;
     }
 
     /**
      * Classifies a webpage given its TextDocument and images
      */
-    public PageType getType(TextDocument doc, List<Image> images) {
+    public PageType getType(TextDocument doc, List<Image> images, ExtractorType extractor) {
         // Calculate basic metrics
         Metrics metrics = calculateMetrics(doc, images);
-        metricsList.add(metrics);
+        metricsMap.put(
+            extractor,
+            metrics
+        );
 
         // Apply classification rules
         return classifyBasedOnMetrics(metrics);
@@ -167,24 +170,39 @@ public class WebpageClassifier {
 
     private void matchPattern(String url){
         if (VIDEO_PATTERN.matcher(url).matches()) {
-            results.put(PageType.VIDEO_PLAYER, results.getOrDefault(PageType.VIDEO_PLAYER, 0) + 2);
-            System.out.println("VIDEO PATTERN");
+            results.put(
+                    PageType.VIDEO_PLAYER,
+                    new ArrayList<>()
+            );
+            results.get(PageType.VIDEO_PLAYER).add(ExtractorType.URL_MATCH);
         }
         if (FORUM_PATTERN.matcher(url).matches()) {
-            results.put(PageType.FORUM, results.getOrDefault(PageType.FORUM, 0) + 2);
-            System.out.println("FORUM PATTERN");
+            results.put(
+                    PageType.FORUM,
+                    new ArrayList<>()
+            );
+            results.get(PageType.FORUM).add(ExtractorType.URL_MATCH);
         }
         if (PHOTO_GALLERY_PATTERN.matcher(url).matches()) {
-            results.put(PageType.PHOTO_GALLERY, results.getOrDefault(PageType.PHOTO_GALLERY, 0) + 2);
-            System.out.println("PHOTO PATTERN");
+            results.put(
+                    PageType.PHOTO_GALLERY,
+                    new ArrayList<>()
+            );
+            results.get(PageType.PHOTO_GALLERY).add(ExtractorType.URL_MATCH);
         }
         if (COMIC_PATTERN.matcher(url).matches()) {
-            results.put(PageType.COMIC, results.getOrDefault(PageType.COMIC, 0) + 2);
-            System.out.println("COMIC PATTERN");
+            results.put(
+                    PageType.COMIC,
+                    new ArrayList<>()
+            );
+            results.get(PageType.COMIC).add(ExtractorType.URL_MATCH);
         }
         if (HOMEPAGE_PATTERN.matcher(url).matches()) {
-            results.put(PageType.HOMEPAGE, results.getOrDefault(PageType.HOMEPAGE, 0) + 2);
-            System.out.println("HOME PATTERN");
+            results.put(
+                    PageType.HOMEPAGE,
+                    new ArrayList<>()
+            );
+            results.get(PageType.HOMEPAGE).add(ExtractorType.URL_MATCH);
         }
 
     }
@@ -344,13 +362,9 @@ public class WebpageClassifier {
         return PageType.UNKNOWN;
     }
 
-    public Map<PageType, Integer> getResults (){
-        return this.results;
-    }
-
-    public Map<String, List<Metrics>> getMetrics(){
-        Map<String, List<Metrics>> metrics = new HashMap<>();
-        metrics.put(WebpageClassifierDemo.TEST_URL, metricsList);
+    public Map<String, Map<ExtractorType, Metrics>> getMetrics(){
+        Map<String, Map<ExtractorType, Metrics>> metrics = new HashMap<>();
+        metrics.put(WebpageClassifierDemo.TEST_URL, metricsMap);
         return  metrics;
     }
 }

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.lang.reflect.Type;
 
+import de.l3s.boilerpipe.classifier.ExtractorType;
 import de.l3s.boilerpipe.classifier.PageType;
 import de.l3s.boilerpipe.classifier.WebpageClassifier;
 import de.l3s.boilerpipe.classifier.Metrics;
@@ -20,6 +21,7 @@ import org.apache.commons.io.IOUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Demonstrates how to use the WebpageClassifier to categorize different types of web pages.
@@ -44,7 +46,7 @@ public final class WebpageClassifierDemo {
         debugMetrics(TEST_URL);
     }
 
-    private static void debugTestDocuments(ExtractorBase extractor) throws Exception {
+    private static void debugTestDocuments(@NotNull ExtractorBase extractor) throws Exception {
         String rawHtml = getRawHtml();
         HTMLDocument htmlDocument = new HTMLDocument(rawHtml);
         final BoilerpipeSAXInput input = new BoilerpipeSAXInput((htmlDocument).toInputSource());
@@ -61,10 +63,8 @@ public final class WebpageClassifierDemo {
     private static void classify(String stringUrl) throws Exception {
         System.out.println("=== Webpage Classification Demo ===\n");
         WebpageClassifier classifier = new WebpageClassifier();
-        PageType result = classifier.classify(stringUrl, getRawHtml());
-        System.out.println("List of results: ");
-        System.out.println(classifier.getResults());
-        System.out.println("Result is: " + result);
+        Map<PageType, List<ExtractorType>> result = classifier.classify(stringUrl, getRawHtml());
+        System.out.println("List of results is: " + result);
     }
 
     private static void debugMetrics(String stringUrl) throws Exception {
@@ -72,9 +72,9 @@ public final class WebpageClassifierDemo {
         classifier.classify(stringUrl, getRawHtml());
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        Map<String, List<Metrics>> metrics = classifier.getMetrics();
+        Map<String, Map<ExtractorType, Metrics>> metrics = classifier.getMetrics();
 
-        List<Map<String, List<Metrics>>> metricsWebsites;
+        List<Map<String, Map<ExtractorType, Metrics>>> metricsWebsites;
 
         // Check if file exists and is not empty
         File file = new File(METRICS_OUTPUT_PATH);
@@ -82,7 +82,7 @@ public final class WebpageClassifierDemo {
             // Read existing data
             try (Reader reader = new FileReader(METRICS_OUTPUT_PATH)) {
                 // Use TypeToken to handle generic types
-                Type listType = new TypeToken<List<Map<String, List<Metrics>>>>(){}.getType();
+                Type listType = new TypeToken<List<Map<String, Map<ExtractorType, Metrics>>>>(){}.getType();
                 metricsWebsites = gson.fromJson(reader, listType);
                 if (metricsWebsites == null) {
                     metricsWebsites = new ArrayList<>();
