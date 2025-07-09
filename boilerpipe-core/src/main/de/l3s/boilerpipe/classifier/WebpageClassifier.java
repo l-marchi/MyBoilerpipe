@@ -147,6 +147,12 @@ public class WebpageClassifier {
                     ".*(?:webtoons|tapas|globalcomix|marvel|dccomics|darkhorse|imagecomics|mangaplus)\\.com/.+.*",
         Pattern.CASE_INSENSITIVE
     );
+
+    private static final Pattern ARTICLE_PATTERN = Pattern.compile(
+            ".*?/(?:article|articles|art|blog)(?:/[^/]+\\.[a-z0-9]+)?(?:/[^/]+)?.*$|" +
+                    ".*(?:quora|medium|substack|huffpost|ezine-articles|hubpages|businessinsider|vocal\\.media)\\.com/.+.*",
+            Pattern.CASE_INSENSITIVE
+    );
     
     private static final Pattern HOMEPAGE_PATTERN = Pattern.compile(
             "^(?:https?://)?(?:www\\.)?(?:[^/]+\\.)+[^/]+/?$",
@@ -222,6 +228,9 @@ public class WebpageClassifier {
         }
         if (HOMEPAGE_PATTERN.matcher(url).matches()) {
             results.computeIfAbsent(PageType.HOMEPAGE, k -> new ArrayList<>()).add(ExtractorType.URL_MATCH);
+        }
+        if (ARTICLE_PATTERN.matcher(url).matches()){
+            results.computeIfAbsent(PageType.ARTICLE, k -> new ArrayList<>()).add(ExtractorType.URL_MATCH);
         }
     }
 
