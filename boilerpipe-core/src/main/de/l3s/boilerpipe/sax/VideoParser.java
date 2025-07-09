@@ -25,7 +25,11 @@ public final class VideoParser {
 	private static final Pattern OBJECT_EMBED_PATTERN = Pattern.compile(
 		"<(?:object|embed)[^>]*(?:data|src)=[\"']([^\"']+)[\"'][^>]*>", 
 		Pattern.CASE_INSENSITIVE);
-	
+
+	private static final Pattern VIDEO_LINK_PATTERN = Pattern.compile(
+			"<a[^>]*href=[\"'](/video/[^\"']+)[\"'][^>]*>",
+			Pattern.CASE_INSENSITIVE
+	);
 	
 	private VideoParser() {
 	}
@@ -55,6 +59,7 @@ public final class VideoParser {
 		
 		// Extract object/embed tags
 		extractObjectEmbeds(htmlContent, videos);
+
 		
 		return videos;
 	}
@@ -103,6 +108,21 @@ public final class VideoParser {
 				videos.add(new Video(src, width, height));
 			}
 		}
+	}
+
+	private void extractVideoLinks(final String htmlContent, List<Video> videos){
+		Matcher matcher = VIDEO_LINK_PATTERN.matcher(htmlContent);
+
+		while (matcher.find()) {
+			String src = matcher.group(1);
+			if (src != null && !src.isEmpty()) {
+				String embedTag = matcher.group(0);
+				String width = extractAttribute(embedTag, "width");
+				String height = extractAttribute(embedTag, "height");
+				videos.add(new Video(src, width, height));
+			}
+		}
+
 	}
 	
 	private String extractAttribute(final String tag, final String attributeName) {
