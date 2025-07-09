@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class WebpageClassifierDemo {
     public static final String RAW_HTML_PATH = "boilerpipe-core/src/main/resources/rawHtml.txt";
-    public static final String METRICS_OUTPUT_PATH = "boilerpipe-core/src/main/resources/metricsOutput.json";
+    public static final String METRICS_OUTPUT_PATH = "boilerpipe-core/src/main/resources/metricsArticle.json";
     public static final String URL_PATH = "boilerpipe-core/src/main/resources/url.txt";
     public static final String TEST_URL;
 
@@ -41,9 +41,8 @@ public final class WebpageClassifierDemo {
     }
 
     public static void main(String[] args) throws Exception {
-        classify(TEST_URL);
+        classifyAndCalculate(TEST_URL);
 //        debugTestDocuments(ArticleExtractor.INSTANCE);
-        debugMetrics(TEST_URL);
     }
 
     private static void debugTestDocuments(@NotNull ExtractorBase extractor) throws Exception {
@@ -60,23 +59,17 @@ public final class WebpageClassifierDemo {
         return IOUtils.toString(fis, StandardCharsets.UTF_8);
     }
 
-    private static void classify(String stringUrl) throws Exception {
-        System.out.println("=== Webpage Classification Demo ===\n");
+    private static void classifyAndCalculate(String stringUrl) throws Exception {
         WebpageClassifier classifier = new WebpageClassifier();
         Map<PageType, List<ExtractorType>> result = classifier.classify(stringUrl, getRawHtml());
         System.out.println("List of results is: " + result);
-    }
-
-    private static void debugMetrics(String stringUrl) throws Exception {
-        WebpageClassifier classifier = new WebpageClassifier();
-        classifier.classify(stringUrl, getRawHtml());
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         Map<String, Map<ExtractorType, Metrics>> metrics = classifier.getMetrics();
 
         List<Map<String, Map<ExtractorType, Metrics>>> metricsWebsites;
 
-        // Check if file exists and is not empty
+        // Check if the file exists and is not empty
         File file = new File(METRICS_OUTPUT_PATH);
         if (file.exists() && file.length() > 0) {
             // Read existing data
@@ -89,11 +82,11 @@ public final class WebpageClassifierDemo {
                 }
             } catch (Exception e) {
                 System.err.println("Error reading existing metrics file: " + e.getMessage());
-                // If we can't read the existing file, start with empty list
+                // If we can't read the existing file, start with an empty list
                 metricsWebsites = new ArrayList<>();
             }
         } else {
-            // Create new list if file doesn't exist or is empty
+            // Create a new list if the file doesn't exist or is empty
             metricsWebsites = new ArrayList<>();
         }
 
