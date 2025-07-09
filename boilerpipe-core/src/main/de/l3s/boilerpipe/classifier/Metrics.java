@@ -1,6 +1,7 @@
 package de.l3s.boilerpipe.classifier;
 
 import de.l3s.boilerpipe.document.Image;
+import de.l3s.boilerpipe.document.Video;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +32,7 @@ public class Metrics {
 
     // Video metrics
     int totalVideos = 0;            // in video scoring
+    List<Video> videos;
 
     // Structural metrics
     int consecutiveLargeBlocks = 0;     // in article scoring

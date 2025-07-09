@@ -8,11 +8,13 @@ import de.l3s.boilerpipe.demo.WebpageClassifierDemo;
 import de.l3s.boilerpipe.document.Image;
 import de.l3s.boilerpipe.document.TextBlock;
 import de.l3s.boilerpipe.document.TextDocument;
+import de.l3s.boilerpipe.document.Video;
 import de.l3s.boilerpipe.extractors.*;
 
 import de.l3s.boilerpipe.sax.BoilerpipeSAXInput;
 import de.l3s.boilerpipe.sax.HTMLDocument;
 import de.l3s.boilerpipe.sax.ImageExtractor;
+import de.l3s.boilerpipe.sax.VideoParser;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -67,8 +69,8 @@ public class WebpageClassifier {
 
     // VIDEO PLAYER - Better detection
     private static class VideoPlayer {
-        private static final int MIN_VIDEOS = 2;
-        private static final int MIN_IMAGES = 1;
+        private static final int MIN_VIDEOS = 1;
+        private static final double MAX_CONTENT_RATIO = 0.3;
         private static final int MAX_CONTENT_WORDS = 500;
         private static final double MIN_AVG_LINK_DENSITY = 0.1;
         private static final double MAX_AVG_LINK_DENSITY = 0.7;
@@ -143,7 +145,7 @@ public class WebpageClassifier {
     );
     
     private static final Pattern COMIC_PATTERN = Pattern.compile(
-            ".*?/(?:comic|comics|webcomic|manga|graphic|strip|chapter|episode|page)(?:/[^/]+\\.[a-z0-9]+)?(?:/[^/]+)?.*$|" +
+            ".*?/(?:comic|comics|webcomic|manga|graphic|chapter|page)(?:/[^/]+\\.[a-z0-9]+)?(?:/[^/]+)?.*$|" +
                     ".*(?:webtoons|tapas|globalcomix|marvel|dccomics|darkhorse|imagecomics|mangaplus)\\.com/.+.*",
         Pattern.CASE_INSENSITIVE
     );
@@ -175,7 +177,7 @@ public class WebpageClassifier {
 //        List<Image> images = imageExtractor.process(doc, rawHtml);
 
         // Extract videos
-        List<Object> videos = Collections.emptyList();
+        List<Video> videos = VideoParser.getInstance().extractVideos(rawHtml);
 
         // Step 2: Content Analysis with multiple extractors
         for (Pair<ExtractorBase, ExtractorType> extractor : extractors) {
@@ -207,7 +209,7 @@ public class WebpageClassifier {
     /**
      * Classifies a webpage given its TextDocument and media elements
      */
-    public PageType getType(TextDocument doc, List<Image> images, List<Object> videos, ExtractorType extractor) {
+    public PageType getType(TextDocument doc, List<Image> images, List<Video> videos, ExtractorType extractor) {
         Metrics metrics = calculateMetrics(doc, images, videos);
         metricsMap.put(extractor, metrics);
         return classifyBasedOnMetrics(metrics, extractor);
@@ -234,7 +236,7 @@ public class WebpageClassifier {
         }
     }
 
-    private @NotNull Metrics calculateMetrics(@NotNull TextDocument doc, List<Image> images, List<Object> videos) {
+    private @NotNull Metrics calculateMetrics(@NotNull TextDocument doc, List<Image> images, List<Video> videos) {
         Metrics metrics = new Metrics();
         metrics.totalBlocks = doc.getTextBlocks().size();
         
@@ -316,6 +318,8 @@ public class WebpageClassifier {
 
         // Process videos - only what we use
         metrics.totalVideos = videos.size();
+        metrics.videos = new ArrayList<>();
+        metrics.videos.addAll(videos);
         
         // Calculate derived metrics
         metrics.calculateDerivedMetrics();
@@ -419,12 +423,12 @@ public class WebpageClassifier {
         double score = 0;
         
         if (metrics.totalVideos >= VideoPlayer.MIN_VIDEOS) score += 0.4;
-        if (metrics.totalImages >= VideoPlayer.MIN_IMAGES) score += 0.1;
-        if (metrics.contentWords < VideoPlayer.MAX_CONTENT_WORDS) score += 0.1;
+        if (metrics.contentRatio <= VideoPlayer.MAX_CONTENT_RATIO) score += 0.1;
+        if (metrics.contentWords < VideoPlayer.MAX_CONTENT_WORDS) score += 0.2;
         if (metrics.avgLinkDensity >= VideoPlayer.MIN_AVG_LINK_DENSITY && 
             metrics.avgLinkDensity <= VideoPlayer.MAX_AVG_LINK_DENSITY) score += 0.1;
         if (metrics.largeBlockRatio < VideoPlayer.MAX_LARGE_BLOCK_RATIO) score += 0.1;
-        if (metrics.mediaToTextRatio >= VideoPlayer.MIN_MEDIA_RATIO) score += 0.1;
+        if (metrics.mediaToTextRatio >= VideoPlayer.MIN_MEDIA_RATIO) score += 0.2;
         if (metrics.largeContentBlocks <= VideoPlayer.MAX_LARGE_BLOCKS) score += 0.1;
         
         return Math.min(1.0, score);
