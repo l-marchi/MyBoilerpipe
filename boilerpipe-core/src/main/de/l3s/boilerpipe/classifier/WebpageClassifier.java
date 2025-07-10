@@ -56,6 +56,7 @@ public class WebpageClassifier {
 
     // ARTICLE - Enhanced criteria
     private static class Article {
+        public static final int MIN_TOTAL_WORDS = 100;
         private static final int MIN_LARGE_CONTENT_BLOCKS = 1;
         private static final double MIN_LARGE_BLOCK_RATIO = 0.2;
         private static final double MIN_CONTENT_RATIO = 0.3;
@@ -81,19 +82,22 @@ public class WebpageClassifier {
 
     // COMIC - Enhanced detection
     private static class Comic {
-        private static final int MIN_LARGE_IMAGE_SIZE = 800;
-        private static final int MIN_LARGE_IMAGES = 1;
-        private static final int MIN_TOTAL_IMAGES = 3;
-        private static final int MAX_TOTAL_IMAGES = 15;
-        private static final int MAX_CONTENT_WORDS = 250;
+        public static final int TOTAL_BLOCKS = 20;
+        public static final int MAX_CONTENT_BLOCKS = 10;
+        private static final int MIN_LARGE_IMAGE_SIZE = 500;
+        private static final int MIN_TOTAL_IMAGES = 1;
+        private static final int MAX_TOTAL_IMAGES = 5;
+        private static final int MAX_CONTENT_WORDS = 200;
         private static final double MAX_AVG_WORDS_PER_BLOCK = 20;
         private static final double MIN_IMAGE_TO_TEXT_RATIO = 0.02;
-        private static final double MAX_LINK_DENSITY = 0.3;
+        private static final double MAX_LINK_DENSITY = 0.2;
         private static final double MIN_LARGE_IMAGE_RATIO = 0.3;
     }
 
     // FORUM - Better identification with refined thresholds
     private static class Forum {
+        public static final int MIN_TOTAL_WORDS = 100;
+        public static final double MAX_BLOCK_SIZE_VARIANCE = 150;
         private static final int MIN_SMALL_BLOCKS = 6;
         private static final int MIN_TOTAL_BLOCKS = 15;
         private static final double MIN_CONTENT_RATIO = 0.1;
@@ -382,6 +386,9 @@ public class WebpageClassifier {
     
     private double calculatePhotoGalleryScore(@NotNull Metrics metrics) {
         double score = 0;
+        if (metrics.images.isEmpty()){
+            return 0;
+        }
 
         // Primary indicators - image-heavy content
         if (metrics.totalImages >= PhotoGallery.MIN_IMAGES) score += 0.3;
@@ -404,13 +411,15 @@ public class WebpageClassifier {
         double score = 0;
         for (Image image: metrics.images){
             if (image.getArea() >= Comic.MIN_LARGE_IMAGE_SIZE * Comic.MIN_LARGE_IMAGE_SIZE){
-                score += 0.3;
+                score += 0.2;
                 break;
             }
         }
         if (metrics.totalImages >= Comic.MIN_TOTAL_IMAGES && 
             metrics.totalImages <= Comic.MAX_TOTAL_IMAGES) score += 0.2;
         if (metrics.contentWords < Comic.MAX_CONTENT_WORDS) score += 0.2;
+        if (metrics.totalBlocks < Comic.TOTAL_BLOCKS) score += 0.1;
+        if (metrics.contentBlocks < Comic.MAX_CONTENT_BLOCKS) score += 0.1;
         if (metrics.avgWordsPerContentBlock < Comic.MAX_AVG_WORDS_PER_BLOCK) score += 0.1;
         if (metrics.imageToTextRatio >= Comic.MIN_IMAGE_TO_TEXT_RATIO) score += 0.1;
         if (metrics.avgLinkDensity < Comic.MAX_LINK_DENSITY) score += 0.1;
@@ -422,7 +431,11 @@ public class WebpageClassifier {
     private double calculateVideoPlayerScore(@NotNull Metrics metrics) {
         double score = 0;
         
-        if (metrics.totalVideos >= VideoPlayer.MIN_VIDEOS) score += 0.4;
+        if (metrics.totalVideos >= VideoPlayer.MIN_VIDEOS){
+            score += 0.4;
+        }else {
+            return 0;
+        }
         if (metrics.contentRatio <= VideoPlayer.MAX_CONTENT_RATIO) score += 0.1;
         if (metrics.contentWords < VideoPlayer.MAX_CONTENT_WORDS) score += 0.2;
         if (metrics.avgLinkDensity >= VideoPlayer.MIN_AVG_LINK_DENSITY && 
@@ -436,7 +449,9 @@ public class WebpageClassifier {
 
     private double calculateArticleScore(@NotNull Metrics metrics) {
         double score = 0;
-        
+        if (metrics.totalWords < Article.MIN_TOTAL_WORDS){
+            return 0;
+        }
         if (metrics.contentQualityScore >= Article.MIN_QUALITY_SCORE) score += 0.2;
         if (metrics.largeContentBlocks >= Article.MIN_LARGE_CONTENT_BLOCKS) score += 0.2;
         if (metrics.largeBlockRatio >= Article.MIN_LARGE_BLOCK_RATIO) score += 0.2;
@@ -452,6 +467,9 @@ public class WebpageClassifier {
 
     private double calculateForumScore(@NotNull Metrics metrics) {
         double score = 0;
+        if (metrics.totalWords < Forum.MIN_TOTAL_WORDS) {
+            return 0;
+        }
         // Primary indicators for forum content structure
         if (metrics.contentBlocks >= Forum.MIN_CONTENT_BLOCKS &&
                 metrics.contentBlocks <= Forum.MAX_CONTENT_BLOCKS) score += 0.15;        // Added upper limit
@@ -466,7 +484,8 @@ public class WebpageClassifier {
         if (metrics.avgLinkDensity >= Forum.MIN_AVG_LINK_DENSITY &&
                 metrics.avgLinkDensity <= Forum.MAX_AVG_LINK_DENSITY) score += 0.1;
         if (metrics.avgWordsPerContentBlock < Forum.MAX_AVG_WORDS_PER_BLOCK) score += 0.05;
-        if (metrics.blockSizeVariance >= Forum.MIN_BLOCK_SIZE_VARIANCE) score += 0.05; // High variance in post lengths
+        if (metrics.blockSizeVariance >= Forum.MIN_BLOCK_SIZE_VARIANCE
+            && metrics.blockSizeVariance <= Forum.MAX_BLOCK_SIZE_VARIANCE) score += 0.05; // High variance in post lengths
 
         //images
         if (metrics.totalImages <= Forum.MAX_IMAGES){

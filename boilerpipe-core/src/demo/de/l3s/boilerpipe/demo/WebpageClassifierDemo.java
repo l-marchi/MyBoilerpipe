@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class WebpageClassifierDemo {
     public static final String RAW_HTML_PATH = "boilerpipe-core/src/main/resources/rawHtml.txt";
-    public static final String METRICS_OUTPUT_PATH = "boilerpipe-core/src/main/resources/metricsVideo.json";
+    public static final String METRICS_OUTPUT_PATH = "boilerpipe-core/src/main/resources/metricsGallery.json";
     public static final String URL_PATH = "boilerpipe-core/src/main/resources/url.txt";
     public static final String TEST_URL;
 
