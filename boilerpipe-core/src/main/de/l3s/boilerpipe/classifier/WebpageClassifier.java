@@ -114,17 +114,8 @@ public class WebpageClassifier {
     }
 
     private void matchPattern(String url) {
-        if (VIDEO_PATTERN.matcher(url).matches()) {
-            results.computeIfAbsent(PageType.VIDEO_PLAYER, k -> new ArrayList<>()).add(ExtractorType.URL_MATCH);
-        }
         if (FORUM_PATTERN.matcher(url).matches()) {
             results.computeIfAbsent(PageType.FORUM, k -> new ArrayList<>()).add(ExtractorType.URL_MATCH);
-        }
-        if (PHOTO_GALLERY_PATTERN.matcher(url).matches()) {
-            results.computeIfAbsent(PageType.PHOTO_GALLERY, k -> new ArrayList<>()).add(ExtractorType.URL_MATCH);
-        }
-        if (COMIC_PATTERN.matcher(url).matches()) {
-            results.computeIfAbsent(PageType.COMIC, k -> new ArrayList<>()).add(ExtractorType.URL_MATCH);
         }
         if (HOMEPAGE_PATTERN.matcher(url).matches()) {
             results.computeIfAbsent(PageType.HOMEPAGE, k -> new ArrayList<>()).add(ExtractorType.URL_MATCH);
@@ -134,7 +125,7 @@ public class WebpageClassifier {
         }
     }
 
-    private Metrics calculateMetrics(TextDocument doc, List<Image> images, List<Video> videos) throws IOException {
+    private Metrics calculateMetrics(TextDocument doc, List<Image> images, List<Video> videos) {
         Metrics metrics = new Metrics();
         metrics.totalBlocks = doc.getTextBlocks().size();
 
@@ -242,18 +233,6 @@ public class WebpageClassifier {
         // Calculate classification confidence for each type
         Map<PageType, Double> confidenceScores = new HashMap<>();
 
-        // PHOTO GALLERY: High image count, low text, many small blocks
-        double galleryScore = calculatePhotoGalleryScore(metrics);
-        confidenceScores.put(PageType.PHOTO_GALLERY, galleryScore);
-
-        // COMIC: Few large images, minimal text, very low word count
-        double comicScore = calculateComicScore(metrics);
-        confidenceScores.put(PageType.COMIC, comicScore);
-
-        // VIDEO PLAYER: Videos present, moderate content, specific patterns
-        double videoScore = calculateVideoPlayerScore(metrics);
-        confidenceScores.put(PageType.VIDEO_PLAYER, videoScore);
-
         // FORUM: Many small blocks, high content ratio, moderate link density, variance
         double forumScore = calculateForumScore(metrics);
         confidenceScores.put(PageType.FORUM, forumScore);
@@ -281,77 +260,7 @@ public class WebpageClassifier {
             return result;
         }
 
-        // Fallback classification with lower thresholds
-//        return fallbackClassification(metrics);
         return PageType.UNKNOWN;
-    }
-
-    private double calculatePhotoGalleryScore(Metrics metrics) {
-        double score = 0;
-        if (metrics.images.isEmpty()) {
-            return 0;
-        }
-
-        // Primary indicators - image-heavy content
-        if (metrics.totalImages >= PhotoGallery.MIN_IMAGES) score += 0.3;
-        if (metrics.largeImages >= PhotoGallery.MIN_LARGE_IMAGES) score += 0.2; // More large images than comics
-        if (metrics.totalImages >= PhotoGallery.OPTIMAL_IMAGES) score += 0.1;
-        if (metrics.imageToTextRatio >= PhotoGallery.MIN_IMAGE_TEXT_RATIO &&
-                metrics.imageToTextRatio <= PhotoGallery.MAX_IMAGE_TEXT_RATIO) score += 0.2;
-        if (metrics.largeImages >= PhotoGallery.MIN_LARGE_IMAGES) score += 0.1;
-
-        // Secondary indicators - simplicity vs homepages
-        if (metrics.contentBlocks <= PhotoGallery.MAX_CONTENT_BLOCKS) score += 0.1;    // Fewer blocks than homepages
-        if (metrics.totalBlocks <= PhotoGallery.MAX_TOTAL_BLOCKS)
-            score += 0.1;        // Simpler structure than homepages
-        if (metrics.avgWordsPerContentBlock < PhotoGallery.MAX_AVG_WORDS_PER_BLOCK) score += 0.1;
-        if (metrics.avgLinkDensity < PhotoGallery.MAX_LINK_DENSITY) score += 0.1;      // Less navigation than homepages
-        if (metrics.contentRatio >= PhotoGallery.MIN_CONTENT_RATIO) score += 0.1;
-
-        return Math.min(1.0, score);
-    }
-
-    private double calculateComicScore(Metrics metrics) {
-        double score = 0;
-        for (Image image : metrics.images) {
-            if (image.getArea() >= Comic.MIN_LARGE_IMAGE_SIZE * Comic.MIN_LARGE_IMAGE_SIZE) {
-                score += 0.2;
-                break;
-            }
-        }
-        if (metrics.images.isEmpty()) {
-            return 0;
-        }
-        if (metrics.totalImages >= Comic.MIN_TOTAL_IMAGES &&
-                metrics.totalImages <= Comic.MAX_TOTAL_IMAGES) score += 0.2;
-        if (metrics.contentWords < Comic.MAX_CONTENT_WORDS) score += 0.2;
-        if (metrics.totalBlocks < Comic.TOTAL_BLOCKS) score += 0.1;
-        if (metrics.contentBlocks < Comic.MAX_CONTENT_BLOCKS) score += 0.1;
-        if (metrics.avgWordsPerContentBlock < Comic.MAX_AVG_WORDS_PER_BLOCK) score += 0.1;
-        if (metrics.imageToTextRatio >= Comic.MIN_IMAGE_TO_TEXT_RATIO) score += 0.1;
-        if (metrics.avgLinkDensity < Comic.MAX_LINK_DENSITY) score += 0.1;
-        if (metrics.largeImages / (double) metrics.totalImages >= Comic.MIN_LARGE_IMAGE_RATIO) score += 0.1;
-
-        return Math.min(1.0, score);
-    }
-
-    private double calculateVideoPlayerScore(Metrics metrics) {
-        double score = 0;
-
-        if (!metrics.videos.isEmpty()) {
-            score += 0.3;
-        } else {
-            return 0;
-        }
-        if (metrics.contentRatio <= VideoPlayer.MAX_CONTENT_RATIO) score += 0.1;
-        if (metrics.contentWords < VideoPlayer.MAX_CONTENT_WORDS) score += 0.2;
-        if (metrics.avgLinkDensity >= VideoPlayer.MIN_AVG_LINK_DENSITY &&
-                metrics.avgLinkDensity <= VideoPlayer.MAX_AVG_LINK_DENSITY) score += 0.1;
-        if (metrics.largeBlockRatio < VideoPlayer.MAX_LARGE_BLOCK_RATIO) score += 0.1;
-        if (metrics.mediaToTextRatio >= VideoPlayer.MIN_MEDIA_RATIO) score += 0.2;
-        if (metrics.largeContentBlocks <= VideoPlayer.MAX_LARGE_BLOCKS) score += 0.1;
-
-        return Math.min(1.0, score);
     }
 
     private double calculateArticleScore(Metrics metrics) {
