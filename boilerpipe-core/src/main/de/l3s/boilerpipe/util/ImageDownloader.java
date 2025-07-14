@@ -67,6 +67,7 @@ public class ImageDownloader {
                             newSrc += "/";
                         }
                         newSrc += src;
+                        image.setSource(newSrc);
                     } else {
                         // Absolute URL already present
                         newSrc = src;

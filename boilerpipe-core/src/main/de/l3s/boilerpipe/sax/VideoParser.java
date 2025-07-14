@@ -77,6 +77,12 @@ public final class VideoParser {
 				String videoTag = matcher.group(0);
 				String width = extractAttribute(videoTag, "width");
 				String height = extractAttribute(videoTag, "height");
+				if (!isCorrectFormat(width)){
+					width = "-1";
+				}
+				if (!isCorrectFormat(height)){
+					height = "-1";
+				}
 				videos.add(new Video(src, width, height));
 			}
 		}
@@ -91,6 +97,12 @@ public final class VideoParser {
 				String iframeTag = matcher.group(0);
 				String width = extractAttribute(iframeTag, "width");
 				String height = extractAttribute(iframeTag, "height");
+				if (!isCorrectFormat(width)){
+					width = "-1";
+				}
+				if (!isCorrectFormat(height)){
+					height = "-1";
+				}
 				videos.add(new Video(src, width, height));
 			}
 		}
@@ -105,26 +117,17 @@ public final class VideoParser {
 				String embedTag = matcher.group(0);
 				String width = extractAttribute(embedTag, "width");
 				String height = extractAttribute(embedTag, "height");
+				if (!isCorrectFormat(width)){
+					width = "-1";
+				}
+				if (!isCorrectFormat(height)){
+					height = "-1";
+				}
 				videos.add(new Video(src, width, height));
 			}
 		}
 	}
 
-	private void extractVideoLinks(final String htmlContent, List<Video> videos){
-		Matcher matcher = VIDEO_LINK_PATTERN.matcher(htmlContent);
-
-		while (matcher.find()) {
-			String src = matcher.group(1);
-			if (src != null && !src.isEmpty()) {
-				String embedTag = matcher.group(0);
-				String width = extractAttribute(embedTag, "width");
-				String height = extractAttribute(embedTag, "height");
-				videos.add(new Video(src, width, height));
-			}
-		}
-
-	}
-	
 	private String extractAttribute(final String tag, final String attributeName) {
 		Pattern pattern = Pattern.compile(
 			"\\b" + attributeName + "=[\"']([^\"']*)[\"']", 
@@ -135,5 +138,15 @@ public final class VideoParser {
 			return matcher.group(1);
 		}
 		return null;
+	}
+
+	private boolean isCorrectFormat(String s){
+		if (s == null) return false;
+		for (int i = 0; i<s.length(); i++){
+			if (!Character.isDigit(s.charAt(i))){
+				return false;
+			}
+		}
+		return true;
 	}
 } 

@@ -8,7 +8,7 @@ package de.l3s.boilerpipe.document;
  * @author Christian Kohlschuetter
  */
 public class Image implements Comparable<Image> {
-	private final String src;
+	private String src;
 	private String width;
 	private String height;
 	private final String alt;
@@ -102,4 +102,8 @@ public class Image implements Comparable<Image> {
 			return 1;
 		}
 	}
+
+    public void setSource(String newSrc) {
+		this.src = newSrc;
+    }
 }

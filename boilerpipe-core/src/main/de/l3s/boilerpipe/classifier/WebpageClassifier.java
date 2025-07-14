@@ -36,8 +36,7 @@ public class WebpageClassifier {
             new Pair<>(DefaultExtractor.INSTANCE, ExtractorType.DEFAULT),
             new Pair<>(CanolaExtractor.INSTANCE, ExtractorType.CANOLA),
             new Pair<>(ArticleSentencesExtractor.INSTANCE, ExtractorType.ARTICLE_SENTENCES),
-            new Pair<>(LargestContentExtractor.INSTANCE, ExtractorType.LARGEST_CONTENT),
-            new Pair<>(KeepEverythingExtractor.INSTANCE, ExtractorType.KEEP_EVERYTHING)
+            new Pair<>(LargestContentExtractor.INSTANCE, ExtractorType.LARGEST_CONTENT)
     );
 
     private static final String IMAGE_PATH = "boilerpipe-core/src/main/resources/images";
@@ -319,6 +318,7 @@ public class WebpageClassifier {
         // Primary indicators for news/portal homepages
         if (metrics.contentBlocks >= Homepage.MIN_CONTENT_BLOCKS &&
                 metrics.contentBlocks <= Homepage.MAX_CONTENT_BLOCKS) score += 0.3;
+        if (metrics.mediaToTextRatio >= Homepage.MIN_MEDIA_TO_TEXT_RATIO) score += 0.2;
         if (metrics.totalBlocks >= Homepage.MIN_TOTAL_BLOCKS) score += 0.2;
         if (metrics.contentRatio >= Homepage.MIN_CONTENT_RATIO &&
                 metrics.contentRatio <= Homepage.MAX_CONTENT_RATIO) score += 0.2;

@@ -41,9 +41,10 @@ public class Constants {
 
     // HOMEPAGE - More precise criteria for news/portal sites
     static class Homepage {
+        public static final double MIN_MEDIA_TO_TEXT_RATIO = 0.02;
         static final int MIN_CONTENT_BLOCKS = 10;           // (news sites have many blocks)
         static final int MAX_CONTENT_BLOCKS = 300;          //  (news sites are content-heavy)
-        static final int MIN_IMAGES = 1;                    //  (some extractors miss images)
+        static final int MIN_IMAGES = 2;                    //  (some extractors miss images)
         static final int MAX_IMAGES = 50;                  //  (news sites have many images)
         static final double MIN_CONTENT_RATIO = 0.02;       //  (news sites have lots of boilerplate)
         static final double MAX_CONTENT_RATIO = 0.3;        //  (news sites have lower ratios)
