@@ -9,16 +9,17 @@ package de.l3s.boilerpipe.document;
  */
 public class Image implements Comparable<Image> {
 	private final String src;
-	private final String width;
-	private final String height;
+	private String width;
+	private String height;
 	private final String alt;
-	private final int area;
+	private int area;
 
 	public Image(final String src, final String width, final String height, final String alt) {
-		this.src = src;
 		if(src == null) {
 			throw new NullPointerException("src attribute must not be null");
 		}
+
+		this.src = src;
 		this.width = nullTrim(width);
 		this.height = nullTrim(height);
 		this.alt = nullTrim(alt);
@@ -51,7 +52,19 @@ public class Image implements Comparable<Image> {
 	public String getAlt() {
 		return alt;
 	}
-	
+
+	public void setWidth(int width) {
+		this.width = nullTrim(String.valueOf(width));
+	}
+
+	public void setHeight(int height) {
+		this.height = nullTrim(String.valueOf(height));
+	}
+
+	public void setArea(int area) {
+		this.area = area;
+	}
+
 	private static String nullTrim(String s) {
 		if(s == null) {
 			return null;
